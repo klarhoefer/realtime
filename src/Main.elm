@@ -4,12 +4,15 @@ module Main exposing (..)
 import Browser
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Http
+import Time
 
 import Data exposing (..)
+import Graph exposing (..)
+
 
 type Msg
-    = GotSamples (Result Http.Error (List Float))
+    = GotSamples (Result DataError Samples)
+    | Tick Time.Posix
 
 
 type alias Model =
@@ -33,31 +36,36 @@ init _ = (Model 0 [] Nothing, loadData GotSamples)
 
 
 subscriptions : model -> Sub Msg
-subscriptions _ = Sub.none
+subscriptions _ =
+    Time.every 1000 Tick
 
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
+        Tick _ -> (model, loadData GotSamples)
         GotSamples samplesRes ->
             case samplesRes of
-                Ok samples -> ({model | samples = samples }, Cmd.none)
-                Err _ -> ({model | errMsg = Just "Mist!"}, Cmd.none)
+                Ok samples -> ({model | samples = samples.samples
+                                      , second = samples.second
+                                      , errMsg = Nothing }
+                              , Cmd.none
+                              )
+                Err err -> ({model | errMsg = Just (errorMessage err)}, Cmd.none)
+
 
 view : Model -> Html Msg
 view model =
     div []
         [ text <| "Second " ++ (String.fromInt model.second)
-        , a [ href "/data" ]
-            [ text "data" ]
         , div []
             [ div []
-                (List.map viewSample model.samples)
+                [ drawSamples model.samples
+                ]
+            , div []
+                (case model.errMsg of
+                    Just errMsg -> [ text errMsg ]
+                    _ -> []
+                )
             ]
-        ]
-
-viewSample : Float -> Html Msg
-viewSample f =
-    span []
-        [ text (String.fromFloat f)
         ]

@@ -1,16 +1,32 @@
-module Data exposing (loadData)
+module Data exposing (loadData, DataError, errorMessage, Samples)
 
 
 import Http
 import Json.Decode as D
 
 
-loadData : (Result Http.Error (List Float) -> msg) -> Cmd msg
+type alias DataError = Http.Error
+
+type alias Samples =
+    { second: Int
+    , samples: List Float
+    }
+
+
+loadData : (Result Http.Error Samples -> msg) -> Cmd msg
 loadData msg =
     Http.get
         { url = "/data"
-        , expect = Http.expectJson msg (D.list D.float)
+        , expect = Http.expectJson msg
+            (D.map2 Samples
+                (D.field "second" D.int)
+                (D.field "samples" (D.list D.float))
+            )
         }
 
--- samplesDecoder : D.Decoder (List Float)
--- samplesDecoder = D.list D.float
+
+errorMessage : DataError -> String
+errorMessage de =
+    case de of
+        Http.BadBody badBody -> badBody
+        _ -> "Error"

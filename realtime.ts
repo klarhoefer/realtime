@@ -1,16 +1,25 @@
-import { _format } from 'https://deno.land/std@0.118.0/testing/asserts.ts'
-import { Application, Router } from 'https://deno.land/x/oak@v10.1.0/mod.ts'
+
+import { Application, Router } from 'https://deno.land/x/oak@v10.1.0/mod.ts' // https://github.com/oakserver/oak
 
 
 const router = new Router()
 
+type AppState = {
+    second: number
+}
+
 router.get('/data', ctx => {
-    const a: number[] = new Array(16)
+    const a: number[] = new Array(64)
     for (let i = 0; i < a.length; ++i) a[i] = Math.random()
-    ctx.response.body = a
+    ctx.response.body = {
+        second: ++ctx.app.state.second,
+        samples: a
+    }
 })
 
-const app = new Application()
+
+const state = { second: 0 }
+const app = new Application<AppState>({ state })
 app.use(router.routes())
 app.use(router.allowedMethods())
 
