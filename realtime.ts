@@ -1,9 +1,16 @@
+import { _format } from 'https://deno.land/std@0.118.0/testing/asserts.ts'
 import { Application, Router } from 'https://deno.land/x/oak@v10.1.0/mod.ts'
 
 
-const app = new Application()
 const router = new Router()
 
+router.get('/data', ctx => {
+    const a: number[] = new Array(16)
+    for (let i = 0; i < a.length; ++i) a[i] = Math.random()
+    ctx.response.body = a
+})
+
+const app = new Application()
 app.use(router.routes())
 app.use(router.allowedMethods())
 

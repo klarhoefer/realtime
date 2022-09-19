@@ -1,1 +1,1 @@
-deno run -A realtime.ts
+start deno run -A realtime.ts
